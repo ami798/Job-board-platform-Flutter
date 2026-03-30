@@ -1,11 +1,10 @@
+// screens/job_list_screen.dart
 import 'package:flutter/material.dart';
 import '../models/job_model.dart';
 import '../services/api_service.dart';
 import 'job_details_screen.dart';
 
 class JobListScreen extends StatefulWidget {
-  const JobListScreen({super.key});
-
   @override
   _JobListScreenState createState() => _JobListScreenState();
 }
@@ -14,11 +13,7 @@ class _JobListScreenState extends State<JobListScreen> {
   List<Job> allJobs = [];
   List<Job> filteredJobs = [];
   final TextEditingController searchController = TextEditingController();
-
-  // Filter states
-  bool isRemote = true;
-  bool isFullTime = false;
-  bool isPartTime = false;
+  String selectedFilter = "Remote";
 
   @override
   void initState() {
@@ -40,28 +35,11 @@ class _JobListScreenState extends State<JobListScreen> {
           job.location.toLowerCase().contains(query.toLowerCase()) ||
           job.company.toLowerCase().contains(query.toLowerCase());
     }).toList();
-
-    setState(() {
-      filteredJobs = results;
-    });
+    setState(() => filteredJobs = results);
   }
 
-  void applyFilters() {
-    List<Job> results = allJobs;
-
-    if (isRemote) {
-      results = results.where((job) => job.location.toLowerCase().contains("remote")).toList();
-    }
-    if (isFullTime) {
-      results = results.where((job) => job.title.toLowerCase().contains("full-time")).toList();
-    }
-    if (isPartTime) {
-      results = results.where((job) => job.title.toLowerCase().contains("part-time")).toList();
-    }
-
-    setState(() {
-      filteredJobs = results;
-    });
+  void selectFilter(String filter) {
+    setState(() => selectedFilter = filter);
   }
 
   @override
@@ -74,70 +52,47 @@ class _JobListScreenState extends State<JobListScreen> {
           padding: const EdgeInsets.all(16),
           child: Column(
             children: [
-              // ================= SEARCH BAR =================
+              // ===== Search Bar =====
               TextField(
                 controller: searchController,
                 onChanged: searchJobs,
                 decoration: InputDecoration(
-                  hintText: "Search job, company, or location",
+                  hintText: "Search jobs and companies",
                   prefixIcon: Icon(Icons.search),
                   filled: true,
                   fillColor: Colors.white,
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none),
                 ),
               ),
-
               const SizedBox(height: 16),
 
-              // ================= FILTER BUTTONS =================
+              // ===== Filter Buttons =====
               Row(
                 children: [
-                  filterButton("Remote", isRemote, () {
-                    setState(() {
-                      isRemote = !isRemote;
-                      applyFilters();
-                    });
-                  }),
+                  filterButton("Remote"),
                   const SizedBox(width: 10),
-                  filterButton("Full-time", isFullTime, () {
-                    setState(() {
-                      isFullTime = !isFullTime;
-                      applyFilters();
-                    });
-                  }),
+                  filterButton("Full-time"),
                   const SizedBox(width: 10),
-                  filterButton("Part-time", isPartTime, () {
-                    setState(() {
-                      isPartTime = !isPartTime;
-                      applyFilters();
-                    });
-                  }),
+                  filterButton("Part-time"),
                 ],
               ),
-
               const SizedBox(height: 20),
 
-              // ================= SECTION TITLE =================
+              // ===== Section Header =====
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    "Recommended for you",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  Text(
-                    "See all",
-                    style: TextStyle(color: Colors.blue, fontWeight: FontWeight.w500),
-                  ),
+                  Text("Recommended for you",
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  Text("See all",
+                      style: TextStyle(color: Colors.blue, fontWeight: FontWeight.w500)),
                 ],
               ),
-
               const SizedBox(height: 16),
 
-              // ================= JOB LIST =================
+              // ===== Job List =====
               Expanded(
                 child: filteredJobs.isEmpty
                     ? Center(child: Text("No jobs found"))
@@ -156,36 +111,37 @@ class _JobListScreenState extends State<JobListScreen> {
     );
   }
 
-  // ================= FILTER BUTTON =================
-  Widget filterButton(String text, bool isSelected, VoidCallback onTap) {
+  // ===== Filter Button Widget =====
+  Widget filterButton(String text) {
+    bool isSelected = selectedFilter == text;
     return GestureDetector(
-      onTap: onTap,
+      onTap: () => selectFilter(text),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
         decoration: BoxDecoration(
           color: isSelected ? Colors.deepPurple : Colors.white,
           borderRadius: BorderRadius.circular(20),
         ),
-        child: Text(
-          text,
-          style: TextStyle(
-            color: isSelected ? Colors.white : Colors.black,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
+        child: Text(text,
+            style: TextStyle(
+                color: isSelected ? Colors.white : Colors.black,
+                fontWeight: FontWeight.w500)),
       ),
     );
   }
 
-  // ================= JOB CARD =================
+  // ===== Job Card Widget =====
   Widget jobCard(Job job) {
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+      ),
       child: Row(
         children: [
-          // Company logo
+          // Company logo placeholder
           Container(
             height: 50,
             width: 50,
@@ -193,16 +149,16 @@ class _JobListScreenState extends State<JobListScreen> {
               color: Colors.blueGrey,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(Icons.play_arrow, color: Colors.white),
+            child: Icon(Icons.business, color: Colors.white),
           ),
           const SizedBox(width: 14),
-
           // Job details
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(job.title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                Text(job.title,
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                 const SizedBox(height: 4),
                 Text(job.company),
                 const SizedBox(height: 4),
@@ -210,7 +166,6 @@ class _JobListScreenState extends State<JobListScreen> {
               ],
             ),
           ),
-
           // Salary + Apply button
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
@@ -228,7 +183,9 @@ class _JobListScreenState extends State<JobListScreen> {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => JobDetailsScreen(job: job)),
+                    MaterialPageRoute(
+                      builder: (_) => JobDetailsScreen(job: job),
+                    ),
                   );
                 },
                 child: Text("Apply"),
