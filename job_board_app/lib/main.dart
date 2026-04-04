@@ -1,11 +1,15 @@
-// lib/main.dart
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+// Note: If 'job_board_app' is not your project name in pubspec.yaml,
+// change it to match your actual project name.
+import 'package:job_board_app/core/theme/app_theme.dart';
+import 'package:job_board_app/routing/app_router.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Initialize storage, firebase, etc.
   runApp(const ProviderScope(child: JobBoardApp()));
 }
 
-// lib/app.dart
 class JobBoardApp extends ConsumerWidget {
   const JobBoardApp({super.key});
 

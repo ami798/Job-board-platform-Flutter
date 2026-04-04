@@ -7,8 +7,11 @@ class AppTheme {
       primarySwatch: Colors.indigo,
       scaffoldBackgroundColor: Colors.white,
       appBarTheme: const AppBarTheme(elevation: 0, color: Colors.white),
-      cardTheme: CardTheme(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      // Change 'CardTheme' to 'CardThemeData'
+      cardTheme: const CardThemeData(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(12)),
+        ),
         elevation: 2,
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
