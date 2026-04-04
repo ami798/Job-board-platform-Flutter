@@ -1,15 +1,87 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
-class PostJobScreen extends StatelessWidget {
+class PostJobScreen extends StatefulWidget {
+  @override
+  _PostJobScreenState createState() => _PostJobScreenState();
+}
+
+class _PostJobScreenState extends State<PostJobScreen> {
+
+  // 🔹 Controllers
+  final titleController = TextEditingController();
+  final companyController = TextEditingController();
+  final locationController = TextEditingController();
+  final salaryController = TextEditingController();
+  final descriptionController = TextEditingController();
+
+  bool isLoading = false;
+
+  // 🔹 API CALL
+  Future<void> postJob() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      final url = Uri.parse("http://127.0.0.1:3000/api/jobs"); // 🔴 CHANGE THIS
+
+      final response = await http.post(
+        url,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: jsonEncode({
+          "title": titleController.text,
+          "company": companyController.text,
+          "location": locationController.text,
+          "salary": salaryController.text,
+          "description": descriptionController.text,
+        }),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Job posted successfully")),
+        );
+
+        // 🔹 Clear fields
+        titleController.clear();
+        companyController.clear();
+        locationController.clear();
+        salaryController.clear();
+        descriptionController.clear();
+
+        // 🔹 Go back
+        Navigator.pop(context);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Failed to post job")),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error: $e")),
+      );
+    }
+
+    setState(() {
+      isLoading = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Color(0xFFF5F6FA),
+
       appBar: AppBar(
         title: Text("Post Job"),
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
+
       body: SingleChildScrollView(
         padding: EdgeInsets.all(16),
         child: Column(
@@ -25,27 +97,19 @@ class PostJobScreen extends StatelessWidget {
 
             SizedBox(height: 20),
 
-            // 🔹 ROLE
-            _buildTextField("Role title", "e.g. Senior Product Designer"),
-
+            _buildTextField("Role title", "e.g. Senior Product Designer", titleController),
             SizedBox(height: 12),
 
-            // 🔹 COMPANY
-            _buildTextField("Company Name", "e.g. Acme Corp"),
-
+            _buildTextField("Company Name", "e.g. Acme Corp", companyController),
             SizedBox(height: 12),
 
-            // 🔹 LOCATION
-            _buildTextField("Location", "e.g. New York"),
-
+            _buildTextField("Location", "e.g. New York", locationController),
             SizedBox(height: 12),
 
-            // 🔹 SALARY
-            _buildTextField("Salary Range", "e.g. \$80k - \$120k"),
+            _buildTextField("Salary Range", "e.g. \$80k - \$120k", salaryController),
 
             SizedBox(height: 20),
 
-            // 🔹 DESCRIPTION
             Text("The Opportunity",
                 style: TextStyle(fontWeight: FontWeight.bold)),
 
@@ -59,6 +123,7 @@ class PostJobScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: TextField(
+                controller: descriptionController,
                 maxLines: null,
                 decoration: InputDecoration(
                   hintText: "Describe the role...",
@@ -69,40 +134,28 @@ class PostJobScreen extends StatelessWidget {
 
             SizedBox(height: 20),
 
-            // 🔹 OPTIONS
-            Row(
-              children: [
-                Checkbox(value: true, onChanged: (v) {}),
-                Text("Remote allowed"),
-              ],
-            ),
-
-            Row(
-              children: [
-                Checkbox(value: false, onChanged: (v) {}),
-                Text("Urgent hiring"),
-              ],
-            ),
-
-            SizedBox(height: 20),
-
             // 🔹 BUTTON
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.symmetric(vertical: 14),
-              decoration: BoxDecoration(
-                color: Colors.blue,
-                borderRadius: BorderRadius.circular(25),
-              ),
-              child: Center(
-                child: Text("POST JOB",
-                    style: TextStyle(color: Colors.white)),
+            GestureDetector(
+              onTap: isLoading ? null : postJob,
+              child: Container(
+                width: double.infinity,
+                padding: EdgeInsets.symmetric(vertical: 14),
+                decoration: BoxDecoration(
+                  color: Colors.blue,
+                  borderRadius: BorderRadius.circular(25),
+                ),
+                child: Center(
+                  child: isLoading
+                      ? CircularProgressIndicator(color: Colors.white)
+                      : Text("POST JOB",
+                          style: TextStyle(color: Colors.white)),
+                ),
               ),
             ),
 
             SizedBox(height: 20),
 
-            // 🔹 EXTRA CARD (bottom from figma)
+            // 🔹 EXTRA CARD
             Container(
               padding: EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -126,8 +179,9 @@ class PostJobScreen extends StatelessWidget {
     );
   }
 
-  // 🔹 REUSABLE TEXT FIELD
-  Widget _buildTextField(String title, String hint) {
+  // 🔹 REUSABLE FIELD WITH CONTROLLER
+  Widget _buildTextField(
+      String title, String hint, TextEditingController controller) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -140,6 +194,7 @@ class PostJobScreen extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
           ),
           child: TextField(
+            controller: controller,
             decoration: InputDecoration(
               hintText: hint,
               border: InputBorder.none,
