@@ -118,13 +118,14 @@ class _ManageJobsScreenState extends State<ManageJobsScreen> {
     return GestureDetector(
       onTap: () {
         Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => ApplicantsScreen(
-              jobTitle: job['title'] ?? "Job",
+            context,
+            MaterialPageRoute(
+              builder: (_) => ApplicantsScreen(
+                jobId: job['_id'],
+                jobTitle: job['title'],
+              ),
             ),
-          ),
-        );
+          );
       },
       child: Container(
         margin: EdgeInsets.only(bottom: 12),
