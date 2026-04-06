@@ -2,14 +2,60 @@ import 'package:flutter/material.dart';
 import 'post_job_screen.dart';
 import 'manage_jobs_screen.dart';
 
+class EmployerDashboard extends StatefulWidget {
+  @override
+  _EmployerDashboardState createState() => _EmployerDashboardState();
+}
 
-class EmployerDashboard extends StatelessWidget {
+class _EmployerDashboardState extends State<EmployerDashboard> {
+  int currentIndex = 0;
+
+  final List<Widget> screens = [
+    HomeDashboard(),
+    ManageJobsScreen(), // Applications tab
+    Center(child: Text("Profile Page")),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: screens[currentIndex],
+
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: currentIndex,
+        onTap: (index) {
+          setState(() {
+            currentIndex = index;
+          });
+        },
+        items: [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: "Home",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.list),
+            label: "Applications",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: "Profile",
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ================= HOME DASHBOARD UI =================
+
+class HomeDashboard extends StatelessWidget {
+  const HomeDashboard({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Color(0xFFF5F6FA),
-
-      bottomNavigationBar: _buildBottomNav(),
 
       body: SafeArea(
         child: SingleChildScrollView(
@@ -19,7 +65,7 @@ class EmployerDashboard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
 
-                // 🔹 HEADER
+                // HEADER
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -47,7 +93,7 @@ class EmployerDashboard extends StatelessWidget {
 
                 SizedBox(height: 15),
 
-                // 🔹 POST JOB BUTTON
+                // POST JOB BUTTON
                 GestureDetector(
                   onTap: () {
                     Navigator.push(
@@ -73,44 +119,14 @@ class EmployerDashboard extends StatelessWidget {
                   ),
                 ),
 
-                SizedBox(height: 12),
-
-                // 🔹 MANAGE JOBS BUTTON (NEW)
-                GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => ManageJobsScreen(),
-                      ),
-                    );
-                  },
-                  child: Container(
-                    width: double.infinity,
-                    padding: EdgeInsets.symmetric(vertical: 14),
-                    decoration: BoxDecoration(
-                      color: Colors.black,
-                      borderRadius: BorderRadius.circular(25),
-                    ),
-                    child: Center(
-                      child: Text(
-                        "Manage Jobs",
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                  ),
-                ),
-
                 SizedBox(height: 20),
 
-                // 🔹 STATS
                 _buildStatCard("Total Jobs Posted", "12"),
                 SizedBox(height: 12),
                 _buildStatCard("Total Applicants", "842"),
 
                 SizedBox(height: 20),
 
-                // 🔹 RECENT JOBS HEADER
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -127,7 +143,6 @@ class EmployerDashboard extends StatelessWidget {
 
                 SizedBox(height: 10),
 
-                // 🔹 JOB LIST
                 _buildJobCard("Senior Product Designer", "148", "Active"),
                 _buildJobCard("Full Stack Engineer", "26", "Draft"),
                 _buildJobCard("Marketing Manager", "67", "Active"),
@@ -139,7 +154,7 @@ class EmployerDashboard extends StatelessWidget {
     );
   }
 
-  // 🔹 STAT CARD
+  // STAT CARD
   Widget _buildStatCard(String title, String value) {
     return Container(
       width: double.infinity,
@@ -161,10 +176,7 @@ class EmployerDashboard extends StatelessWidget {
               SizedBox(height: 8),
               Text(
                 value,
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
               ),
             ],
           ),
@@ -174,7 +186,7 @@ class EmployerDashboard extends StatelessWidget {
     );
   }
 
-  // 🔹 JOB CARD
+  // JOB CARD
   Widget _buildJobCard(String title, String applicants, String status) {
     Color statusColor =
         status == "Active" ? Colors.green : Colors.grey;
@@ -192,7 +204,6 @@ class EmployerDashboard extends StatelessWidget {
       child: Row(
         children: [
 
-          // ICON
           Container(
             padding: EdgeInsets.all(10),
             decoration: BoxDecoration(
@@ -204,7 +215,6 @@ class EmployerDashboard extends StatelessWidget {
 
           SizedBox(width: 10),
 
-          // TEXT
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -222,7 +232,6 @@ class EmployerDashboard extends StatelessWidget {
             ),
           ),
 
-          // STATUS
           Container(
             padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
@@ -236,27 +245,6 @@ class EmployerDashboard extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-
-  // 🔹 BOTTOM NAV
-  Widget _buildBottomNav() {
-    return BottomNavigationBar(
-      currentIndex: 0,
-      items: [
-        BottomNavigationBarItem(
-          icon: Icon(Icons.home),
-          label: "Home",
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.list),
-          label: "Applications",
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.person),
-          label: "Profile",
-        ),
-      ],
     );
   }
 }
