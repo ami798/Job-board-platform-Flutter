@@ -1,22 +1,16 @@
-// lib/main.dart
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  // Initialize storage, firebase, etc.
-  runApp(const ProviderScope(child: JobBoardApp()));
+import 'package:flutter/material.dart';
+import 'screens/employer/employer_dashboard.dart';
+
+void main() {
+  runApp(MyApp());
 }
 
-// lib/app.dart
-class JobBoardApp extends ConsumerWidget {
-  const JobBoardApp({super.key});
-
+class MyApp extends StatelessWidget {
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final router = ref.watch(routerProvider);
-    return MaterialApp.router(
-      title: 'Job Board Platform',
-      theme: AppTheme.light,
-      routerConfig: router,
+  Widget build(BuildContext context) {
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
+      home: EmployerDashboard(),
     );
   }
 }
