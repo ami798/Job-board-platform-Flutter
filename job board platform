@@ -1,1 +1,382 @@
+import 'dart:convert';
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
+void main() {
+  runApp(JobSeekerApp());
+}
+
+class JobSeekerApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'Job Seeker',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        scaffoldBackgroundColor: Color(0xFFF5F7FB),
+      ),
+      home: HomeScreen(),
+    );
+  }
+}
+
+/* =================== HOME SCREEN =================== */
+class HomeScreen extends StatefulWidget {
+  @override
+  _HomeScreenState createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final String baseUrl = "http://10.0.2.2:3000/api"; // emulator localhost
+  List jobs = [];
+  List filteredJobs = [];
+  TextEditingController searchController = TextEditingController();
+  TextEditingController locationController = TextEditingController();
+  TextEditingController salaryController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    loadJobs();
+  }
+
+  Future loadJobs() async {
+    try {
+      final res = await http.get(Uri.parse("$baseUrl/jobs"));
+      final data = json.decode(res.body);
+      setState(() {
+        jobs = data;
+        filteredJobs = data;
+      });
+    } catch (e) {
+      print(e);
+    }
+  }
+
+  void filterJobs() {
+    String search = searchController.text.toLowerCase();
+    String loc = locationController.text.toLowerCase();
+    String sal = salaryController.text.toLowerCase();
+
+    setState(() {
+      filteredJobs = jobs.where((job) {
+        final matchesSearch = job["title"].toLowerCase().contains(search);
+        final matchesLocation = job["location"].toLowerCase().contains(loc);
+        final matchesSalary = job["salary"].toString().contains(sal);
+        return matchesSearch && matchesLocation && matchesSalary;
+      }).toList();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text("Job Seeker")),
+      body: Padding(
+        padding: EdgeInsets.all(12),
+        child: Column(
+          children: [
+            TextField(
+              controller: searchController,
+              decoration: InputDecoration(
+                hintText: "Search jobs",
+                prefixIcon: Icon(Icons.search),
+                filled: true,
+                fillColor: Colors.white,
+                border:
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+              ),
+              onChanged: (_) => filterJobs(),
+            ),
+            SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: locationController,
+                    decoration: InputDecoration(
+                      hintText: "Location",
+                      filled: true,
+                      fillColor: Colors.white,
+                      border:
+                          OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    ),
+                    onChanged: (_) => filterJobs(),
+                  ),
+                ),
+                SizedBox(width: 8),
+                Expanded(
+                  child: TextField(
+                    controller: salaryController,
+                    decoration: InputDecoration(
+                      hintText: "Salary",
+                      filled: true,
+                      fillColor: Colors.white,
+                      border:
+                          OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    ),
+                    onChanged: (_) => filterJobs(),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 12),
+            Expanded(
+              child: ListView.builder(
+                itemCount: filteredJobs.length,
+                itemBuilder: (_, i) {
+                  final job = filteredJobs[i];
+                  return Card(
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    elevation: 4,
+                    margin: EdgeInsets.symmetric(vertical: 6),
+                    child: ListTile(
+                      title: Text(job["title"], style: TextStyle(fontWeight: FontWeight.bold)),
+                      subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SizedBox(height: 4),
+                            Text(job["company"], style: TextStyle(color: Colors.grey[700])),
+                            Text("${job["location"]} | \$${job["salary"]}"),
+                          ]),
+                      trailing: ElevatedButton(
+                        child: Text("View"),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => JobDetails(jobId: job["id"])),
+                          );
+                        },
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        items: [
+          BottomNavigationBarItem(icon: Icon(Icons.work), label: "Jobs"),
+          BottomNavigationBarItem(icon: Icon(Icons.list), label: "Applications"),
+          BottomNavigationBarItem(icon: Icon(Icons.business), label: "Employer"),
+        ],
+        onTap: (i) {
+          if (i == 1) Navigator.push(context, MaterialPageRoute(builder: (_) => ApplicationsScreen()));
+          if (i == 2) Navigator.push(context, MaterialPageRoute(builder: (_) => EmployerScreen()));
+        },
+      ),
+    );
+  }
+}
+
+/* =================== JOB DETAILS =================== */
+class JobDetails extends StatefulWidget {
+  final int jobId;
+  JobDetails({required this.jobId});
+  @override
+  _JobDetailsState createState() => _JobDetailsState();
+}
+
+class _JobDetailsState extends State<JobDetails> {
+  final String baseUrl = "http://10.0.2.2:3000/api";
+  Map job = {};
+
+  @override
+  void initState() {
+    super.initState();
+    loadJob();
+  }
+
+  Future loadJob() async {
+    final res = await http.get(Uri.parse("$baseUrl/jobs/${widget.jobId}"));
+    setState(() => job = json.decode(res.body));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text("Job Details")),
+      body: job.isEmpty
+          ? Center(child: CircularProgressIndicator())
+          : Padding(
+              padding: EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(job["title"], style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                  SizedBox(height: 6),
+                  Text(job["company"], style: TextStyle(color: Colors.grey[700])),
+                  SizedBox(height: 10),
+                  Text(job["description"]),
+                  SizedBox(height: 20),
+                  ElevatedButton(
+                    child: Text("Apply"),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => ApplyScreen(job: job)),
+                      );
+                    },
+                  )
+                ],
+              ),
+            ),
+    );
+  }
+}
+
+/* =================== APPLY SCREEN =================== */
+class ApplyScreen extends StatelessWidget {
+  final Map job;
+  ApplyScreen({required this.job});
+  final TextEditingController cvController = TextEditingController();
+  final String baseUrl = "http://10.0.2.2:3000/api";
+
+  Future apply() async {
+    await http.post(Uri.parse("$baseUrl/applications"),
+        headers: {"Content-Type": "application/json"},
+        body: json.encode({
+          "jobId": job["id"],
+          "jobTitle": job["title"],
+          "status": "Pending",
+          "cv": cvController.text
+        }));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text("Apply")),
+      body: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          children: [
+            TextField(controller: cvController, decoration: InputDecoration(labelText: "CV Link")),
+            SizedBox(height: 20),
+            ElevatedButton(
+              child: Text("Submit"),
+              onPressed: () async {
+                await apply();
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Applied!")));
+                Navigator.pop(context);
+              },
+            )
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/* =================== APPLICATIONS =================== */
+class ApplicationsScreen extends StatefulWidget {
+  @override
+  _ApplicationsScreenState createState() => _ApplicationsScreenState();
+}
+
+class _ApplicationsScreenState extends State<ApplicationsScreen> {
+  final String baseUrl = "http://10.0.2.2:3000/api";
+  List apps = [];
+
+  @override
+  void initState() {
+    super.initState();
+    loadApps();
+  }
+
+  Future loadApps() async {
+    final res = await http.get(Uri.parse("$baseUrl/applications"));
+    setState(() => apps = json.decode(res.body));
+  }
+
+  Color getColor(String status) {
+    if (status == "Accepted") return Colors.green;
+    if (status == "Rejected") return Colors.red;
+    return Colors.orange;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text("My Applications")),
+      body: ListView.builder(
+        itemCount: apps.length,
+        itemBuilder: (_, i) {
+          final a = apps[i];
+          return Card(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            elevation: 3,
+            margin: EdgeInsets.symmetric(vertical: 6, horizontal: 12),
+            child: ListTile(
+              title: Text(a["jobTitle"]),
+              trailing: Container(
+                padding: EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: getColor(a["status"]),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(a["status"], style: TextStyle(color: Colors.white)),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+/* =================== EMPLOYER =================== */
+class EmployerScreen extends StatefulWidget {
+  @override
+  _EmployerScreenState createState() => _EmployerScreenState();
+}
+
+class _EmployerScreenState extends State<EmployerScreen> {
+  final String baseUrl = "http://10.0.2.2:3000/api";
+  TextEditingController company = TextEditingController();
+  TextEditingController message = TextEditingController();
+  String status = "";
+
+  Future sendRequest() async {
+    await http.post(Uri.parse("$baseUrl/employer-request"),
+        headers: {"Content-Type": "application/json"},
+        body: json.encode({"company": company.text, "message": message.text, "status": "Pending"}));
+    loadStatus();
+  }
+
+  Future loadStatus() async {
+    final res = await http.get(Uri.parse("$baseUrl/employer-request"));
+    final data = json.decode(res.body);
+    setState(() => status = data["status"]);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    loadStatus();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text("Employer Request")),
+      body: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          children: [
+            TextField(controller: company, decoration: InputDecoration(labelText: "Company")),
+            SizedBox(height: 8),
+            TextField(controller: message, decoration: InputDecoration(labelText: "Message")),
+            SizedBox(height: 12),
+            ElevatedButton(onPressed: sendRequest, child: Text("Submit")),
+            SizedBox(height: 20),
+            Text("Status: $status", style: TextStyle(fontSize: 18)),
+          ],
+        ),
+      ),
+    );
+  }
+}
